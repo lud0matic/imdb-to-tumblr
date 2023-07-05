@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "imdb-to-tumblr"
+version = "0.1.0"
+description = "Publish in your tumblr blog the poster of the movie that you want."
+authors = ["Gaston Abril Rotger <abril.rotger@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "^2.31.0"
+Pillow = "^9.5.0"
+PyTumblr = "^0.1.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
