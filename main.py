@@ -123,7 +123,7 @@ class App:
                         tags=tags, 
                         data=image_path
                     )
-                    posts_url_dict = client.posts(blog_name)  
+                    posts_url_dict = client.posts(self.blog_name)  
                     post_url = posts_url_dict["posts"][0]["post_url"]
                     print(post_url)
                 except:
