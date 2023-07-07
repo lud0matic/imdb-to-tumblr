@@ -23,7 +23,7 @@ Publish in your tumblr blog the poster of the movie that you want.
 
 This script needs the API of Tumblr and TMDB.
 
-+ Who to get those APIs
++ How to get those APIs
   + TMBD: [Create an account](https://www.themoviedb.org/signup) and follow this [easy steps](https://developer.themoviedb.org/docs/getting-started).
   +  Tumblr: [Follow this steps](https://github.com/tumblr/pytumblr#using-the-interactive-console). `interactive_console.py` will create a `.tumblr` file in your root path.
 
