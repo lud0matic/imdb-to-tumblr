@@ -1,110 +1,144 @@
-import requests, datetime, pytumblr, os, argparse, sys
+import requests, datetime, pytumblr, os, argparse, sys, re, click
+from tqdm import tqdm
 from PIL import Image
-# from dotenv import load_dotenv
 
-# load_dotenv()
-
-TUMBLR_CONSUMER_KEY = os.getenv("TUMBLR_CONSUMER_KEY")
-TUMBLR_CONSUMER_SECRET_KEY = os.getenv("TUMBLR_CONSUMER_SECRET_KEY")
-TUMBLR_OAUTH_TOKEN = os.getenv("TUMBLR_OAUTH_TOKEN")
-TUMBLR_OAUTH_SECRET = os.getenv("TUMBLR_OAUTH_SECRET")
-
-TMDB_API = os.getenv("TMDB_API")
-API_URL = "https://api.themoviedb.org/3/"
-IMAGE_URL = 'https://image.tmdb.org/t/p/original'
-
-BLOG_NAME = os.getenv("BLOG_NAME")
-
-IMAGE_HEIGHT = 500
-IMAGE_WIDTH = 700
-
-current_year = datetime.datetime.now()
 parser = argparse.ArgumentParser(description="Publish post on Tumblr using tmdb")
 parser.add_argument("IMDB_ID", action="store", help="Insert iMBd ID. Format: tt[ID]")
-parser.add_argument("-f", action="store_true",dest="fav",default=False, help="Tag movie as favourite")
 args = parser.parse_args()
-fav = args.fav
 
-###Tumblr###
-
-client = pytumblr.TumblrRestClient(TUMBLR_CONSUMER_KEY,
-                                   TUMBLR_CONSUMER_SECRET_KEY,
-                                   TUMBLR_OAUTH_TOKEN,
-                                   TUMBLR_OAUTH_SECRET)
-                                
-def request_movie():    
-    r = requests.get(API_URL + "find/" + IMDB_ID + "?api_key=" + TMDB_API + "&external_source=imdb_id")
-    json_list = r.json()
-    json_list = json_list.get("movie_results")
-
-    tags_dict = {}
-    try:
-        for k, v in json_list[0].items():
-            if k == "id":
-                tags_dict.update({k:v})
-            elif k == "title":
-                tags_dict.update({k:v})
-            elif k == "original_title":
-                tags_dict.update({k:v})
-            elif k == "poster_path":
-                tags_dict.update({k:v})
-        if args.fav == True:
-            tags_dict.update({"fav": "Fav"})
-    except IndexError:
-        print("Wrong ID. Try again") 
-        sys.exit(2)
-
-    return(tags_dict)
-
-def request_imagen_and_resizing():
-    r = requests.get(IMAGE_URL + request_movie().get("poster_path"))
-    filename = request_movie().get("poster_path").split('/')[-1]
-    file = open(filename, 'wb')
-    file.write(r.content)
-    file.close()
-    path = os.getcwd()
-    fullpath = (path + '/'+ filename)
-    #resizing
-    image = Image.open(fullpath)
-    new_image = image.resize((IMAGE_HEIGHT,IMAGE_WIDTH))
-    new_image.save(fullpath)
-
-    return(fullpath)
-
-def request_director():
-    r = requests.get(API_URL + "movie/" + str(request_movie().get("id")) + "/credits?api_key=" + TMDB_API)
-    json_list_credits = r.json()
-    json_list_credits = json_list_credits.get("crew")
-    director_list = []
-    for i in json_list_credits:
-        if i['job'] == 'Director':
-            director_list.append((i['name']))
-
-    return director_list    
-
-def tags():
-    tag_list = []
-    for k, v in request_movie().items():
-        if k == "title":
-            tag_list.append(v)
-        elif k == "fav":
-            tag_list.append(v)
-        elif k == "original_title":
-            tag_list.append(v)
-    tag_list.append(request_director()[0])
-    tag_list.append(str(current_year.year))
-
-    return(tag_list)
-
-def post_tumblr():
-    client.create_photo(BLOG_NAME, state="published",caption=request_movie().get("title"), tags=tags(), data=request_imagen_and_resizing())
-    os.remove(request_imagen_and_resizing())
-    print(request_movie().get("title"))
-    #Print the URL of you latest post
-    posts_url_dict = client.posts(BLOG_NAME)  
-    post_url = (posts_url_dict["posts"][0])
-    print(post_url["post_url"])
+class TheMovieDBApi:
+    API_URL = "https://api.themoviedb.org/3/"
     
+    def __init__(self, api_key):
+        self.api_key = api_key
+
+    def find(self, imdb_id):
+        url = "{}find/{}?api_key={}&external_source=imdb_id".format(
+            self.API_URL,
+            imdb_id,
+            self.api_key
+        )
+        response = requests.get(url)
+        return response.json()
+
+    def credits(self, movie_id):
+        url = "{}movie/{}/credits?api_key={}".format(
+            self.API_URL,
+            movie_id,
+            self.api_key
+        )
+        response = requests.get(url)
+        return response.json()
+
+class App:
+    def __init__(
+        self, 
+        api_key, 
+        blog_name,
+        tumblr_consumer_key, 
+        tumblr_consumer_secret_key, 
+        tumblr_oauth_token,
+        tumblr_oauth_secret
+    ):
+        self.theMovieDBApi = TheMovieDBApi(api_key)
+        self.blog_name = blog_name
+        self.tumblr_consumer_key = tumblr_consumer_key
+        self.tumblr_consumer_secret_key = tumblr_consumer_secret_key
+        self.tumblr_oauth_token = tumblr_oauth_token
+        self.tumblr_oauth_secret = tumblr_oauth_secret
+
+    def download(self, url, fname):
+        resp = requests.get(url, stream=True)
+        total = int(resp.headers.get('content-length', 0))
+        with open(fname, 'wb') as file, tqdm(
+            total=total,
+            unit='iB',
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as bar:
+            for data in resp.iter_content(chunk_size=1024):
+                size = file.write(data)
+                bar.update(size)
+
+    def download_poster(self, movie):
+        filename = "{}{}".format(
+            re.sub('[^a-zA-Z0-9\.]', '_', movie["title"]),
+            os.path.splitext(movie["poster_path"])[1]
+        ).lower()
+        url = "https://image.tmdb.org/t/p/original{}".format(
+            movie["poster_path"]
+        )
+        self.download(url, filename)
+        return "{}/{}".format(os.getcwd(), filename)
+
+    def resize_image(self, path_image):
+        image = Image.open(path_image)
+        new_image = image.resize((500,700))
+        new_image.save(path_image)
+
+    def filterTags(self, movie):
+        keys = ["title", "original_title", "fav"]
+        jobs = ["Director"]
+
+        tags_list = list(set([
+            movie[key] for key in movie
+            if key in keys
+        ]))
+    
+        credits = self.theMovieDBApi.credits(movie["id"])
+        for crew in credits["crew"]:
+            if crew["job"] in jobs:
+                tags_list.append(crew["name"])
+
+        tags_list.append(str(datetime.datetime.now().year))
+        return tags_list
+    
+    def post_tumblr(self, imdb_id):
+        try:
+            movie = self.theMovieDBApi.find(imdb_id)["movie_results"][0]
+            title = movie["title"]
+            tags = self.filterTags(movie)
+            print("Title: {}".format(title))
+            print("Tags:")
+            for tag in tags:
+                print("  #{}".format(tag))
+            print("")
+            print("Download Poster:")
+            image_path = self.download_poster(movie)
+            print("Resize Poster:")
+            self.resize_image(image_path)
+            print("")
+            if click.confirm('All ready to publish?', default=True):
+                try:
+                    client = pytumblr.TumblrRestClient(
+                        self.tumblr_consumer_key,
+                        self.tumblr_consumer_secret_key,
+                        self.tumblr_oauth_token,
+                        self.tumblr_oauth_secret
+                    )
+                    client.create_photo(
+                        self.blog_name, 
+                        state="published",
+                        caption=title, 
+                        tags=tags, 
+                        data=image_path
+                    )
+                    posts_url_dict = client.posts(self.blog_name)  
+                    post_url = posts_url_dict["posts"][0]["post_url"]
+                    print(post_url)
+                except:
+                    print("An error occurred when interacting with tumblr :(")
+            os.remove(image_path)
+        except:
+            print("An unexpected error occurred :(")
+
 if __name__ == "__main__":
-    IMDB_ID = args.IMDB_ID
-    post_tumblr()
+    app = App(
+        os.getenv("TMDB_API"), 
+        os.getenv("BLOG_NAME"),
+        os.getenv("TUMBLR_CONSUMER_KEY"),
+        os.getenv("TUMBLR_CONSUMER_SECRET_KEY"),
+        os.getenv("TUMBLR_OAUTH_TOKEN"),
+        os.getenv("TUMBLR_OAUTH_SECRET")
+    )
+    app.post_tumblr(args.IMDB_ID)
