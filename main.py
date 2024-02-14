@@ -1,8 +1,25 @@
 import requests, datetime, pytumblr, os, argparse, sys
 from PIL import Image
-# from dotenv import load_dotenv
+from rich.progress import (BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn)
+ 
+ ##Custom Progress Bar##
+progress_bar = Progress(
+    TextColumn("[blue]Posting..."),    
+    BarColumn(),
+    TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+    MofNCompleteColumn(),
+    TextColumn("•"),
+    TimeElapsedColumn(),
+    TextColumn("•"),
+    TimeRemainingColumn(),
+)
 
-# load_dotenv()
+total_iterations = 13
 
 TUMBLR_CONSUMER_KEY = os.getenv("TUMBLR_CONSUMER_KEY")
 TUMBLR_CONSUMER_SECRET_KEY = os.getenv("TUMBLR_CONSUMER_SECRET_KEY")
@@ -31,7 +48,8 @@ client = pytumblr.TumblrRestClient(TUMBLR_CONSUMER_KEY,
                                    TUMBLR_CONSUMER_SECRET_KEY,
                                    TUMBLR_OAUTH_TOKEN,
                                    TUMBLR_OAUTH_SECRET)
-                                
+
+
 def request_movie():    
     r = requests.get(API_URL + "find/" + IMDB_ID + "?api_key=" + TMDB_API + "&external_source=imdb_id")
     json_list = r.json()
@@ -53,7 +71,8 @@ def request_movie():
     except IndexError:
         print("Wrong ID. Try again") 
         sys.exit(2)
-
+    
+    progress.update(task, advance=1)
     return(tags_dict)
 
 def request_imagen_and_resizing():
@@ -68,7 +87,8 @@ def request_imagen_and_resizing():
     image = Image.open(fullpath)
     new_image = image.resize((IMAGE_HEIGHT,IMAGE_WIDTH))
     new_image.save(fullpath)
-
+    
+    progress.update(task, advance=1)
     return(fullpath)
 
 def request_director():
@@ -79,7 +99,8 @@ def request_director():
     for i in json_list_credits:
         if i['job'] == 'Director':
             director_list.append((i['name']))
-
+    
+    progress.update(task, advance=1)
     return director_list    
 
 def tags():
@@ -93,18 +114,23 @@ def tags():
             tag_list.append(v)
     tag_list.append(request_director()[0])
     tag_list.append(str(current_year.year))
-
+    
+    progress.update(task, advance=1)
     return(tag_list)
 
 def post_tumblr():
     client.create_photo(BLOG_NAME, state="published",caption=request_movie().get("title"), tags=tags(), data=request_imagen_and_resizing())
     os.remove(request_imagen_and_resizing())
+    progress.update(task, advance=1)
     print(request_movie().get("title"))
     #Print the URL of you latest post
     posts_url_dict = client.posts(BLOG_NAME)  
     post_url = (posts_url_dict["posts"][0])
     print(post_url["post_url"])
+        
     
 if __name__ == "__main__":
-    IMDB_ID = args.IMDB_ID
-    post_tumblr()
+    with progress_bar as progress:
+        task = progress.add_task("[green]Posting...", total=total_iterations)
+        IMDB_ID = args.IMDB_ID        
+        post_tumblr()
