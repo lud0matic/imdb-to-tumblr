@@ -12,6 +12,8 @@
     - [Installing](#installing)
   - [Usage ](#usage-)
   - [Why? ¯\\\_(ツ)\_/¯](#why-_ツ_)
+  - [Updates](#updates)
+        - [14/02/2024](#14022024)
 
 ## About <a name = "about"></a>
 
@@ -83,3 +85,10 @@ The title of the post will be the name of the movie, and the tags will include t
 ## Why? ¯\\\_(ツ)_/¯ 
 
 Since 2011, I have been posting the poster of every movie I watched. It is one of the many things I love to keep track of. During the pandemic, I learned Python. Before that, every post I published [on my blog](https://mubiss.tumblr.com) was created manually. I would search for the poster, resize it, copy the movie's name and director, and then publish the post. At one point, I ended up hating this process. The main idea behind this script is to automate the entire process.
+
+## Updates
+##### 14/02/2024
+
+I added a progress bar while the script is running. It shows the percentage, the amount of steps completed, the time elapsed and the estimated time remaining. Thanks @jsagredo-scott for the idea :))
+
+![Alt text](/assets/images/SCR-20240214-dpqk-2.png)
