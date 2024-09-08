@@ -4,6 +4,7 @@ import pytumblr
 import os
 import argparse
 import sys
+from dotenv import load_dotenv
 from PIL import Image
 from rich.progress import (
     BarColumn,
@@ -29,6 +30,7 @@ progress_bar = Progress(
 total_iterations = 5
 
 # Environment Variables
+load_dotenv()
 TUMBLR_CONSUMER_KEY = os.getenv("TUMBLR_CONSUMER_KEY")
 TUMBLR_CONSUMER_SECRET_KEY = os.getenv("TUMBLR_CONSUMER_SECRET_KEY")
 TUMBLR_OAUTH_TOKEN = os.getenv("TUMBLR_OAUTH_TOKEN")
