@@ -1,0 +1,13 @@
+[project]
+name = "imdb-to-tumblr"
+version = "0.1.0"
+description = "Publish in your tumblr blog the poster of the movie that you want."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pillow>=11.0.0",
+    "python-dotenv>=1.0.1",
+    "pytumblr>=0.1.2",
+    "requests>=2.32.3",
+    "rich>=13.9.4",
+]
