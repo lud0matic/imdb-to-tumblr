@@ -14,6 +14,7 @@
   - [Why? ¯\\\_(ツ)\_/¯](#why-_ツ_)
   - [Updates](#updates)
         - [14/02/2024](#14022024)
+        - [27/12/2024](#27122024)
 
 ## About <a name = "about"></a>
 
@@ -33,39 +34,24 @@ This script needs the API of Tumblr and TMDB.
 
 Clone this repo and install it wherever you want.
 
-`
+``` shell 
 git clone https://github.com/lud0matic/imdb-to-tumblr.git
-`
+```
 
 Rename `.env.exam` to `.env`
 
 Copy every API KEY that you get from the [Prerequisites](#prerequisites) and paste it in `.env` file. In `BLOG_NAME=` write the name of your blog <ins>without</ins> `tumblr.com`.
 
-If you use `poetry`, run.
+If you use `uv`, run.
 
 ``` shell
-poetry install
+uv sync
 ```
 
 Otherwise, use `pip`.
 
 ```shell
 pip install -r requirements.txt
-```
-
-`Poetry` doesn't load `.env` variables by default. I installed [this plugin](https://github.com/volopivoshenko/poetry-plugin-dotenv) to solve this.
-
-If you end up using `pip`, install `python-dotenv`
-
-```shell
-pip install python-dotenv
-```
-
-And uncomment this two lines in main.py file.
-
-``` python
-from dotenv import load_dotenv
-load_dotenv()
 ```
 
 ## Usage <a name = "usage"></a>
@@ -92,3 +78,7 @@ Since 2011, I have been posting the poster of every movie I watched. It is one o
 I added a progress bar while the script is running. It shows the percentage, the amount of steps completed, the time elapsed and the estimated time remaining. Thanks @jsagredo-scott for the idea :))
 
 ![Alt text](/assets/images/SCR-20240214-dpqk-2.png)
+
+##### 27/12/2024
+
+Update `Pillow` and implement [uv](https://docs.astral.sh/uv/)
