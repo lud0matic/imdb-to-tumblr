@@ -49,8 +49,11 @@ current_year = datetime.datetime.now().year
 parser = argparse.ArgumentParser(description="Publish post on Tumblr using tmdb")
 parser.add_argument("IMDB_ID", action="store", help="Insert IMDb ID. Format: tt[ID]")
 parser.add_argument("-f", action="store_true", dest="fav", default=False, help="Tag movie as favourite")
+parser.add_argument("-d", action="store", dest="publish_date", default=False, help="Set a custom publication date. Format: YYYYMMDD")
 args = parser.parse_args()
 fav = args.fav
+date_str = args.publish_date
+
 IMDB_ID = args.IMDB_ID
 
 # Tumblr Client
@@ -138,7 +141,7 @@ def post_tumblr():
     directors = request_director(movie_info["id"])
     tags = create_tags(movie_info, directors)
     
-    client.create_photo(BLOG_NAME, state="published", caption=movie_info.get("title"), tags=tags, data=image_path)
+    client.create_photo(BLOG_NAME, state="published", caption=movie_info.get("title"), tags=tags, data=image_path, date=date_str)
     os.remove(image_path)
     progress.update(task, advance=1)
     
