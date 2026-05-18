@@ -82,3 +82,13 @@ I added a progress bar while the script is running. It shows the percentage, the
 ##### 27/12/2024
 
 Update `Pillow` and implement [uv](https://docs.astral.sh/uv/)
+
+#### 18/05/2026
+
+Add the option to set a custom publication date using the `-d` flag. Format: YYYYMMDD
+
+Example: 
+
+```shell 
+python main.py tt2106476 -d 20230101
+```
